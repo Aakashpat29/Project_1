@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "full mern stack project",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon src/index.js"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Aakashpat29/Project_1/issues"
   },
-  "homepage": "https://github.com/Aakashpat29/Project_1#readme"
+  "homepage": "https://github.com/Aakashpat29/Project_1#readme",
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
 }
