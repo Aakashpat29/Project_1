@@ -1,10 +1,18 @@
 import { Router } from "express";
-import { loginUser, registerUser, logoutUser, getCurrentUser, changeCurrentPassword, updateAccountDetails, updateUserAvatar, updateUserCoverImage, getUserChannelProfile, getWatchHistory, clearWatchHistory } from "../controllers/user.controller.js";
+import { loginUser, registerUser, logoutUser, getCurrentUser,
+     changeCurrentPassword, updateAccountDetails, updateUserAvatar,
+      updateUserCoverImage, getUserChannelProfile, getWatchHistory, clearWatchHistory } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { refreshAccessToken } from "../controllers/user.controller.js";
 import multer from "multer";
+import {uploadVideo, getAllVideos, getVideoById, publishAVideo, updateVideo,
+     deleteVideo,togglePublishStatus} from "../controllers/video.controller.js";
 
+import {getVideoComments, addComment, updateComment, deleteComment} from "../controllers/comment.controller.js"
+import {toggleCommentLike, toggleTweetLike, toggleVideoLike, getLikedVideos} from "../controllers/like.controller.js"
+import {createTweet, getUserTweets, updateTweet, deleteTweet} from "../controllers/tweet.controller.js"
+import {toggleSubscription, getUserChannelSubscribers, getSubscribedChannels} from "../controllers/subscription.controller.js"
 
 const router = Router();
 
@@ -34,6 +42,56 @@ router.route("/coverImage-update").patch(verifyJWT, upload.single("coverImage"),
 router.route("/c/:username").get(verifyJWT, getUserChannelProfile)
 router.route("/history").get(verifyJWT, getWatchHistory)
 router.route("/clear-history").get(verifyJWT, clearWatchHistory)
+
+// video controllers route
+
+router.route("/upload-video").post(verifyJWT, upload.fields([
+        { name: "videoFile", maxCount: 1 },
+        { name: "thumbnail", maxCount: 1 }
+    ]),uploadVideo)
+
+router.route("/").get(verifyJWT, getAllVideos)
+
+router.route("/publish-video").post(verifyJWT, upload.fields([
+        { name: "videoFile", maxCount: 1 },
+        { name: "thumbnail", maxCount: 1 }
+    ]),publishAVideo)
+
+router.route("/get-Video-By-Id").get(verifyJWT,getVideoById)
+
+router.route("/update-video").post(verifyJWT,upload.single("thumbnail"), updateVideo )
+
+router.route("/delete-video").post(verifyJWT, deleteVideo)
+
+router.route("/toggle-publish-video").post(verifyJWT, togglePublishStatus)
+
+//comment controllers routes
+
+router.route("/get-Video-Comments").get(getVideoComments)
+
+router.route("/add-Comment").post(verifyJWT, addComment)
+
+router.route("/update-comment").post(verifyJWT, updateComment)
+
+router.route("/delete-comment").post(verifyJWT, deleteComment)
+
+//like contorllers route
+
+router.route("/toggle-Video-Like").post(verifyJWT, toggleVideoLike)
+router.route("/toggle-Comment-Like").post(verifyJWT, toggleCommentLike)
+router.route("/toggle-Tweet-Like").post(verifyJWT, toggleTweetLike)
+router.route("/get-liked-videos").get(verifyJWT, getLikedVideos)
+
+//tweet controllers route
+router.route("/create-Tweet").post(verifyJWT, createTweet)
+router.route("/update-Tweet").post(verifyJWT, updateTweet)
+router.route("/deleteTweet").post(verifyJWT, deleteTweet)
+router.route("/get-user-tweet").get(verifyJWT, getUserTweets)
+
+// subscription controllers routes
+router.route("/toggle-Subscription").post(verifyJWT, toggleSubscription)
+router.route("/get-User-Channel-Subscribers").get(verifyJWT, getUserChannelSubscribers)
+router.route("/get-Subscribed-Channels").get(verifyJWT, getSubscribedChannels)
 
 
 export default router;
