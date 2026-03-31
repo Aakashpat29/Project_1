@@ -17,7 +17,7 @@ const uploadOnCloudinary = async (localFilePath) => {
       chunk_size: 6000000,
     });
 
-    fs.unlinkSync(localFilePath); // Delete local file
+    fs.unlinkSync(localFilePath);
 
     return {
       url: response.url,
@@ -25,8 +25,10 @@ const uploadOnCloudinary = async (localFilePath) => {
       duration: response.duration ? Math.round(response.duration) : 0,
     };
   } catch (error) {
-    console.error("Cloudinary Error:", error);
-    if (fs.existsSync(localFilePath)) fs.unlinkSync(localFilePath);
+    console.error("Cloudinary upload error:", error);
+    if (fs.existsSync(localFilePath)) {
+      fs.unlinkSync(localFilePath);
+    }
     return null;
   }
 };

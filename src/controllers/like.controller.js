@@ -11,31 +11,37 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Video ID is required");
   }
 
-  const existingLike = await Like.findOne({
-    likedBy: req.user._id,
-    video: videoId,
-  });
-
-  if (existingLike) {
-    await existingLike.deleteOne();
-
-    return res.status(200).json(new ApiResponse(200, {}, "Video unliked"));
+  if (!req.user || !req.user._id) {
+    throw new ApiError(401, "User not authenticated");
   }
 
   try {
+    // Check if already liked
+    const existingLike = await Like.findOne({
+      likedBy: req.user._id,
+      video: videoId,
+    });
+
+    if (existingLike) {
+      await existingLike.deleteOne();
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { isLiked: false }, "Video unliked"));
+    }
+
+    // Create new like
     await Like.create({
       likedBy: req.user._id,
       video: videoId,
     });
-  } catch (error) {
-    // ⚠️ handle duplicate error
-    if (error.code === 11000) {
-      return res.status(200).json(new ApiResponse(200, {}, "Already liked"));
-    }
-    throw error;
-  }
 
-  return res.status(200).json(new ApiResponse(200, {}, "Video liked"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { isLiked: true }, "Video liked"));
+  } catch (error) {
+    console.error("Like toggle error:", error);
+    throw new ApiError(500, "Failed to toggle like");
+  }
 });
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
@@ -90,23 +96,26 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, {}, "Tweet liked"));
 });
 
+
 const getLikedVideos = asyncHandler(async (req, res) => {
   const likedVideos = await Like.find({
     likedBy: req.user._id,
-    video: { $ne: null },
+    video: { $ne: null },        // Only video likes, not comments/tweets
   }).populate({
     path: "video",
     populate: {
       path: "owner",
-      select: "username avatar",
+      select: "username avatar fullName",
     },
-  });
+  }).sort({ createdAt: -1 });    // Most recent first
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(200, likedVideos, "Liked videos fetched successfully")
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      likedVideos.map(item => item.video),   // Return only video objects
+      "Liked videos fetched successfully"
+    )
+  );
 });
 
 export { toggleCommentLike, toggleTweetLike, toggleVideoLike, getLikedVideos };

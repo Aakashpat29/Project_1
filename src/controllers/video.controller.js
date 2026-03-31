@@ -76,14 +76,14 @@ const publishAVideo = asyncHandler(async (req, res) => {
   const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
 
   if (!videoLocalPath || !thumbnailLocalPath) {
-    throw new ApiError(400, "Video and thumbnail are required");
+    throw new ApiError(400, "Video file and thumbnail are required");
   }
 
   const videoUpload = await uploadOnCloudinary(videoLocalPath);
   const thumbnailUpload = await uploadOnCloudinary(thumbnailLocalPath);
 
   if (!videoUpload?.url || !thumbnailUpload?.url) {
-    throw new ApiError(500, "Failed to upload to Cloudinary");
+    throw new ApiError(500, "Failed to upload files to Cloudinary");
   }
 
   const video = await Video.create({
@@ -91,7 +91,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     description: description.trim(),
     videoFile: videoUpload.url,
     thumbnail: thumbnailUpload.url,
-    duration: videoUpload.duration || 0, // ← Save duration
+    duration: videoUpload.duration || 0, // ← Duration saved here
     owner: req.user._id,
     isPublished: true,
   });
@@ -108,11 +108,10 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Video ID");
   }
 
-  // ✅ Fixed: Removed deprecated 'new' option
   const video = await Video.findByIdAndUpdate(
     videoId,
     { $inc: { views: 1 } },
-    { returnDocument: "after" } // ← Modern way
+    { returnDocument: "after" } // ← Fixed
   ).populate({
     path: "owner",
     select: "_id username avatar fullName",

@@ -130,6 +130,7 @@ import {
   updateAccountDetails,
   addToWatchHistory,
   clearWatchHistory,
+  removeFromWatchHistory,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -170,5 +171,6 @@ router.route("/c/:username").get(verifyJWT, getUserChannelProfile);
 router.route("/history").get(verifyJWT, getWatchHistory);
 router.route("/history/:videoId").post(verifyJWT, addToWatchHistory);
 router.route("/history/clear").delete(verifyJWT, clearWatchHistory);
+router.route("/history/:videoId").delete(verifyJWT, removeFromWatchHistory);
 
 export default router;

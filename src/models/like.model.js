@@ -23,7 +23,7 @@ const likeSchema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Prevent duplicate likes
+// Prevent duplicate likes
 likeSchema.index({ likedBy: 1, video: 1 }, { unique: true });
 
 export const Like = mongoose.model("Like", likeSchema);

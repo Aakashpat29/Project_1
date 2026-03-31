@@ -169,7 +169,7 @@ const logoutUser = asyncHandler(async (req, res) => {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     }
   );
 
@@ -278,7 +278,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     }
   ).select("-password");
 
@@ -308,7 +308,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     }
   ).select("-password");
 
@@ -342,7 +342,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
       },
     },
     {
-      new: true,
+      returnDocument: "after",
     }
   ).select("-password");
 
@@ -449,21 +449,15 @@ const addToWatchHistory = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Video ID");
   }
 
-  const user = await User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
-    {
-      $addToSet: { watchHistory: videoId },
-    },
-    { returnDocument: "after" } // ← Fixed here
+    { $addToSet: { watchHistory: videoId } },
+    { returnDocument: "after" } // ← Fixed
   );
-
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
 
   return res
     .status(200)
-    .json(new ApiResponse(200, {}, "Video added to watch history"));
+    .json(new ApiResponse(200, {}, "Added to watch history"));
 });
 
 const clearWatchHistory = asyncHandler(async (req, res) => {
@@ -472,6 +466,30 @@ const clearWatchHistory = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Watch history cleared successfully"));
+});
+
+const removeFromWatchHistory = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(videoId)) {
+    throw new ApiError(400, "Invalid Video ID");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $pull: { watchHistory: videoId }   
+    },
+    { new: true }
+  );
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, {}, "Video removed from watch history")
+  );
 });
 
 export {
@@ -487,5 +505,6 @@ export {
   getUserChannelProfile,
   getWatchHistory,
   addToWatchHistory,
-  clearWatchHistory
+  clearWatchHistory,
+  removeFromWatchHistory,
 };
