@@ -5,6 +5,9 @@ import Watch from "./pages/Watch";
 import Login from "./pages/Login";
 import Like from "./components/Like";
 import History from "./pages/History";
+import LikedVideos from "./pages/LikedVideos";
+
+
 
 function App() {
   return (
@@ -15,6 +18,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/likes" element={<Like />} />
       <Route path="/history" element={<History />} />
+      <Route path="/likes" element={<LikedVideos />} />
     </Routes>
   );
 }

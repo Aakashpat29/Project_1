@@ -1,12 +1,29 @@
 // src/components/Navbar.jsx
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 
 function Navbar({ toggleSidebar }) {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search_query") || ""
+  );
+
   const token = localStorage.getItem("token");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim() === "") {
+      navigate("/");
+      return;
+    }
+    // YouTube style URL
+    navigate(`/?search_query=${encodeURIComponent(searchTerm)}`);
   };
 
   return (
@@ -21,22 +38,27 @@ function Navbar({ toggleSidebar }) {
           </button>
           <Link to="/" className="flex items-center gap-1">
             <span className="text-3xl text-red-600">▶️</span>
-            <span className="text-2xl font-bold">YouTube</span>
+            <span className="text-2xl font-bold">Zube</span>
           </Link>
         </div>
 
-        <div className="flex-1 max-w-xl mx-8">
-          <div className="flex border border-gray-300 rounded-full">
+        <form onSubmit={handleSearch} className="flex-1 max-w-[640px] mx-8">
+          <div className="flex">
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search"
-              className="flex-1 px-5 py-2 focus:outline-none"
+              className="flex-1 border border-gray-300 px-5 py-2.5 rounded-l-full focus:outline-none focus:border-blue-500 text-lg"
             />
-            <button className="px-7 bg-gray-100 border-l hover:bg-gray-200">
+            <button
+              type="submit"
+              className="bg-gray-100 border border-l-0 border-gray-300 px-7 rounded-r-full hover:bg-gray-200 transition"
+            >
               🔍
             </button>
           </div>
-        </div>
+        </form>
 
         <div className="flex items-center gap-4">
           <Link

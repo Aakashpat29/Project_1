@@ -1,29 +1,27 @@
-// src/pages/Like.jsx
+// src/pages/LikedVideos.jsx
 import { useEffect, useState } from "react";
-import API from "../services/api";
 import MainLayout from "../layouts/MainLayout";
 import VideoCard from "../components/VideoCard";
 import Skeleton from "../components/Skeleton";
 
-function Like() {
+function LikedVideos() {
   const [likedVideos, setLikedVideos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchLikedVideos = async () => {
-    try {
-      setLoading(true);
-      const res = await API.get("/likes/videos");
-      setLikedVideos(res.data.data || []);
-    } catch (error) {
-      console.error("Error fetching liked videos:", error);
-      setLikedVideos([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchLikedVideos();
+    const fetchLiked = async () => {
+      try {
+        setLoading(true);
+        const res = await API.get("/likes/videos");
+        setLikedVideos(res.data.data || []);
+      } catch (error) {
+        console.error(error);
+        setLikedVideos([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLiked();
   }, []);
 
   return (
@@ -51,9 +49,7 @@ function Like() {
             <h2 className="text-2xl font-semibold text-gray-400">
               No liked videos yet
             </h2>
-            <p className="text-gray-500 mt-2">
-              Videos you like will appear here
-            </p>
+            <p className="text-gray-500">Videos you like will appear here</p>
           </div>
         )}
       </div>
@@ -61,4 +57,4 @@ function Like() {
   );
 }
 
-export default Like;
+export default LikedVideos;

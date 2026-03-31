@@ -17,7 +17,7 @@ function Watch() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subsCount, setSubsCount] = useState(0);
 
-  // 🔥 Fetch single video + increment view count
+  // Fetch single video
   const fetchVideo = async () => {
     try {
       const res = await API.get(`/videos/${videoId}`);
@@ -38,18 +38,16 @@ function Watch() {
     }
   };
 
-  // 🔥 Add to Watch History
+  // Add to Watch History
   const addToWatchHistory = async () => {
     try {
       await API.post(`/users/history/${videoId}`);
-      console.log("✅ Added to watch history");
     } catch (error) {
       console.error("Failed to add to watch history:", error);
-      // Silent fail - don't break video watching experience
     }
   };
 
-  // 🔥 Fetch recommended videos for sidebar
+  // Fetch recommended videos
   const fetchVideos = async () => {
     try {
       const res = await API.get("/videos");
@@ -59,10 +57,9 @@ function Watch() {
     }
   };
 
-  // 🔥 Fetch channel subscription stats
+  // Fetch channel stats
   const fetchChannelStats = async (channelId) => {
     if (!channelId) return;
-
     try {
       const res = await API.get(`/subscriptions/stats/${channelId}`);
       setIsSubscribed(res.data.data.isSubscribed || false);
@@ -72,7 +69,7 @@ function Watch() {
     }
   };
 
-  // 🔥 Subscribe / Unsubscribe
+  // Subscribe handler
   const handleSubscribe = async () => {
     if (!video?.owner?._id) return;
 
@@ -85,78 +82,86 @@ function Watch() {
     try {
       await API.post(`/subscriptions/toggle/${channelId}`);
     } catch (error) {
-      console.error("❌ Subscribe error:", error);
+      console.error(error);
       setIsSubscribed(wasSubscribed);
       setSubsCount((prev) => (wasSubscribed ? prev + 1 : prev - 1));
       alert("Failed to update subscription");
     }
   };
 
-  // 🔥 Like / Unlike
+  
   const handleLike = async () => {
-    const newLiked = !liked;
-
-    setLiked(newLiked);
-    setLikesCount((prev) => (newLiked ? prev + 1 : prev - 1));
+    const wasLiked = liked;
+    const wasCount = likesCount;
 
     try {
-      await API.post(`/likes/toggle/v/${videoId}`);
+      setLiked(!wasLiked);
+      setLikesCount(wasLiked ? wasCount - 1 : wasCount + 1);
+
+      const res = await API.post(`/likes/toggle/v/${videoId}`);
+
+      // Sync with server
+      const videoRes = await API.get(`/videos/${videoId}`);
+      const data = videoRes.data.data;
+      setLiked(data.isLiked);
+      setLikesCount(data.likesCount);
     } catch (error) {
-      console.error("❌ Like error:", error);
-      setLiked(!newLiked);
-      setLikesCount((prev) => (newLiked ? prev - 1 : prev + 1));
+      console.error(
+        "Like error details:",
+        error.response?.data || error.message
+      );
+      alert(
+        "Like failed: " + (error.response?.data?.message || "Unknown error")
+      );
+
+      // Rollback
+      setLiked(wasLiked);
+      setLikesCount(wasCount);
     }
   };
 
-  // 🔄 Main load function
+  // Main load
   useEffect(() => {
     if (!videoId) return;
 
     const loadData = async () => {
       setLoading(true);
-
       const videoData = await fetchVideo();
       await fetchVideos();
 
-      // Add to watch history after video is loaded
       if (videoData) {
         await addToWatchHistory();
       }
-
       setLoading(false);
     };
 
     loadData();
   }, [videoId]);
 
-  // 🔄 Load channel stats after video loads
+  // Load channel stats
   useEffect(() => {
     if (video?.owner?._id) {
       fetchChannelStats(video.owner._id);
     }
   }, [video?.owner?._id]);
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
         <p className="text-xl">Loading video...</p>
       </div>
     );
-  }
-
-  if (!video) {
+  if (!video)
     return (
       <div className="p-6 text-center">
         <p className="text-red-500 text-xl">Video not found</p>
       </div>
     );
-  }
 
   return (
     <div className="flex gap-6 p-6">
-      {/* LEFT SIDE - Main Video Content */}
+      {/* LEFT SIDE */}
       <div className="flex-1">
-        {/* Video Player */}
         <div className="w-full bg-black aspect-video rounded-xl overflow-hidden">
           <video
             src={video.videoFile}
@@ -166,10 +171,9 @@ function Watch() {
           />
         </div>
 
-        {/* Title */}
         <h1 className="text-xl font-semibold mt-4">{video.title}</h1>
 
-        {/* Views + Date + Actions */}
+        {/* Views + Actions */}
         <div className="flex justify-between items-center mt-3 text-sm">
           <p className="text-gray-600">
             {video.views?.toLocaleString() || 0} views •{" "}
@@ -181,17 +185,22 @@ function Watch() {
           </p>
 
           <div className="flex gap-3">
+            {/* Like Button */}
             <button
               onClick={handleLike}
-              className={`px-5 py-1.5 rounded-full font-medium transition flex items-center gap-1.5 ${
+              className={`px-6 py-2 rounded-full font-medium transition-all flex items-center gap-2 border ${
                 liked
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  ? "bg-red-500 text-white border-red-500 hover:bg-red-600"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
               }`}
             >
-              👍 {likesCount.toLocaleString()}
+              <span
+                className={`text-xl transition-all duration-200 ${liked ? "scale-125" : ""}`}
+              >
+                {liked ? "❤️" : "♡"}
+              </span>
+              <span className="font-medium">{likesCount.toLocaleString()}</span>
             </button>
-
             <button className="bg-gray-100 hover:bg-gray-200 px-5 py-1.5 rounded-full font-medium">
               🔁 Share
             </button>
@@ -201,7 +210,7 @@ function Watch() {
           </div>
         </div>
 
-        {/* Channel Info + Subscribe */}
+        {/* Channel + Subscribe */}
         <div className="flex justify-between items-center mt-6 border-t pt-4">
           <div className="flex items-center gap-3">
             <img
@@ -232,16 +241,14 @@ function Watch() {
           </div>
         </div>
 
-        {/* Description */}
         <div className="bg-gray-100 p-4 rounded-lg mt-4 text-sm whitespace-pre-wrap">
           {video.description}
         </div>
 
-        {/* Comments */}
         <Comments videoId={videoId} />
       </div>
 
-      {/* RIGHT SIDE - Recommended Videos */}
+      {/* RIGHT SIDE - Recommended */}
       <div className="w-[380px] flex-shrink-0 hidden lg:block">
         <h3 className="font-semibold mb-4 text-lg">Up next</h3>
         <div className="flex flex-col gap-4">
